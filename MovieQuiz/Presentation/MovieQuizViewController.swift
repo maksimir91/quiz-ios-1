@@ -2,9 +2,14 @@ import UIKit
 
 final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
 
+    // MARK: - Properties
+    
     @IBOutlet private var imageView: UIImageView!
     @IBOutlet private var textLabel: UILabel!
     @IBOutlet private var counterLabel: UILabel!
+    
+    @IBOutlet weak private var yesButton: UIButton!
+    @IBOutlet weak private var noButton: UIButton!
     
     private var currentQuestionIndex = 0
     private var correctAnswers = 0
@@ -16,7 +21,26 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
     private var currentQuestion: QuizQuestion?
     private var statisticService: StatisticService?
     
-    // MARK: - Lifecycle
+    
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        questionFactory.requestNextQuestion()
+        questionFactory.delegate = self
+        alertPresenter = AlertPresenterImpl(viewController: self)
+        statisticService = StatisticServiceImpl()
+    }
+    
+    // MARK: - QuestionFactoryDelegate
+    func didReceiveNextQuestion(question: QuizQuestion?) {
+        guard let question = question else {
+            return }
+            currentQuestion = question
+            let viewModel = convert(model: question)
+        DispatchQueue.main.async { [weak self] in
+            self?.show(quiz: viewModel)
+        }
+    }
+    // MARK: - Private Functions
     private func convert(model: QuizQuestion) -> QuizStepViewModel {
         let questionStep = QuizStepViewModel(
             image: UIImage(named: model.image) ?? UIImage(),
@@ -44,7 +68,11 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
             self.showNextQuestionOrResults()
             self.imageView.layer.borderWidth = 0
+            self.noButton.isEnabled = true
+            self.yesButton.isEnabled = true
         }
+        noButton.isEnabled = false
+        yesButton.isEnabled = false
     }
     
     private func showNextQuestionOrResults () {
@@ -56,7 +84,6 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
         }
     }
     
-
     private func showFinalResults() {
         statisticService?.store(correct: correctAnswers, total: questionAmount)
         
@@ -85,28 +112,11 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
         let bestGameInfoLine = "Рекорд: \(bestGame.correct)\\\(bestGame.total)" + "(\(bestGame.date.dateTimeString))"
         let averageAccuracyLine = "Средняя точность: \(accuracy)%"
         
-        let resultMessage = [currentGameResultLine, totalPlaysCountLine, bestGameInfoLine, averageAccuracyLine].joined(separator: " ")
+        let resultMessage = [currentGameResultLine, totalPlaysCountLine, bestGameInfoLine, averageAccuracyLine].joined(separator: "\n")
         return resultMessage
     }
-    
-    override func viewDidLoad() {
-        super.viewDidLoad()
-        questionFactory.requestNextQuestion()
-        questionFactory.delegate = self
-        alertPresenter = AlertPresenterImpl(viewController: self)
-        statisticService = StatisticServiceImpl()
-    }
-    // MARK: - QuestionFactoryDelegate
-    func didReceiveNextQuestion(question: QuizQuestion?) {
-        guard let question = question else {
-            return }
-            currentQuestion = question
-            let viewModel = convert(model: question)
-        DispatchQueue.main.async { [weak self] in
-            self?.show(quiz: viewModel)
-        }
-    }
-    
+
+    // MARK: - IBAction
     @IBAction private func noButtonClicked(_ sender: UIButton) {
         guard let currentQuestion = currentQuestion else {
             return
