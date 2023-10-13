@@ -28,9 +28,9 @@ final class StatisticServiceImpl {
     
     init(
         userDefaults: UserDefaults = .standard,
-         decoder: JSONDecoder = JSONDecoder(),
-         encoder: JSONEncoder = JSONEncoder(),
-         dateProvider: @escaping () -> Date = { Date() }
+        decoder: JSONDecoder = JSONDecoder(),
+        encoder: JSONEncoder = JSONEncoder(),
+        dateProvider: @escaping () -> Date = { Date() }
     ) {
         self.userDefaults = userDefaults
         self.decoder = decoder
@@ -102,5 +102,4 @@ extension StatisticServiceImpl: StatisticService {
             bestGame = currentBestGame
         }
     }
-    
 }
